@@ -1,4 +1,4 @@
-parallel-libgfapi
+gfapi-perf-tool
 =================
 
 benchmark for distributed, multi-thread test of Gluster libgfapi performance
@@ -9,7 +9,8 @@ This may be the best way to get RDMA to perform well with Gluster as well.  RDMA
 
 * fork from other branch 
 
-   origin branch base on glusterfs 3.x,but we need to update version of gluster,so we fixed some error that can running on glusterfs 6.x,this tool just testing performance between fuse accessing and gfapi access
+   origin branch base on glusterfs 3.x,but we need to update version of gluster,so we fixed some error that can running on glusterfs 6.x,this tool just testing performance between fuse accessing and gfapi access (update by perrynzhou@gmail.com)
+
 * low-level test program
 
 The "C" program that runs in each process is gfapi_perf_tool.c .  You can run this program by itself.  The command line syntax is a little odd because it uses environment variables.   This is less user-friendly but also easier in some ways.   For example, you don't have to keep entering the same parameters.  To compile, see the command at the top of the program.
@@ -43,47 +44,43 @@ To print out environment variables that it supports:
     GFAPI_USEC_DELAY_PER_FILE (0) - if non-zero, then sleep this many microseconds after each file is accessed
     GFAPI_FSYNC_AT_CLOSE (0) - if 1, then issue fsync() call on file before closing
 
-To run a short test on the subdirectory "mytmpdir" within a Gluster volume "demo" served by host gprfs024-10ge:
-
-    # GFAPI_VOLNAME=demo GFAPI_HOSTNAME=gprfs024-10ge GFAPI_BASEDIR=/mytmpdir ./gfapi_perf_tool
-
-In this program, it creates subdirectories and puts no more than GFAPI_FILES_PER_DIR files in each subdirectory.   This allows you to create more files per thread.  
-
-FIXME: It needs an extra level of directories to run really long tests.
-
-* parallel multi-client test script
-
-The parallel_gfapi_test.sh script launches a multi-threaded, distributed test using the above program.  Someday it may switch to using fio with the libgfapi engine developed by Huamin Chen, but for now it's simpler to do it this way.  Environment variables supported by this script are in comments at top of the script. You may need to edit a few the lines in the script above the comment NO EDITABLE PARAMETERS BELOW THIS LINE.  
-
 Here's a sample run:
-
-    # env | grep PGFAPI
-    PGFAPI_PROGRAM=/root/parallel-libgfapi/gfapi_perf_tool
-    # PGFAPI_MOUNTPOINT=/mnt/test PGFAPI_PROCESSES=1 bash ./parallel_gfapi_test.sh
-    volume name: test2
-    Gluster server in the volume: 172.17.50.86
-    workload: seq-wr
-    list of clients in file: clients.list
-    record size (KB): 64
-    file size (KB): 4
-    files per thread: 10240
-    processes per client: 1
-    threads per process: 1
-    test driver glusterfs mountpoint: /mnt/test
-    top directory within Gluster volume: /gfapi-test
-    each thread (process) runs program at: /root/parallel-libgfapi/gfapi_perf_tool
-    log files for each libgfapi process at /tmp/parallel_gfapi_logs.12266
-    starting gun timeout = 10
-    removing any previous files
-    Thu Sep 25 11:16:24 EDT 2014: starting 1 clients ... perf88 
-    ls: cannot access /mnt/test//gfapi-test/*.ready: No such file or directory
-    ...
-    Thu Sep 25 11:16:30 EDT 2014: clients are all ready
-    Thu Sep 25 11:16:30 EDT 2014 : clients should all start running within a few seconds
-    per-thread results in /tmp/parallel_gfapi_logs.12266/result.csv
-    transfer-rate: 1.0 MBytes/s
-    file-rate:  1.0 files/sec
-    IOPS: IOPS: 1.0 requests/sec
-    
+[root@bogon /home/perrynzhou/]$ GFAPI_VOLNAME=train1_vol GFAPI_FILES=5000  GFAPI_FUSE=1  GFAPI_LOAD=rnd-rd GFAPI_HOSTNAME=172.21.78.11  GFAPI
+_BASEDIR=/mnt/data/11095119   ./gfapi_perf_tool
+GLUSTER: 
+  volume=train1_vol
+  transport=tcp
+  host=172.25.78.11
+  port=24007
+  fuse?Yes
+  trace level=0
+  start timeout=60
+WORKLOAD:
+  type = rnd-rd 
+  threads/proc = 1
+  base directory = /mnt/data/11095119
+  prefix=f
+  file size = 1024 KB
+  file count = 5000
+  record size = 64 KB
+  files/dir=1000
+  fsync-at-close? No 
+  random read/write requests = 16
+thread   0:   files read = 5000
+  files done = 5000
+  I/O (record) transfers = 80000
+  total bytes = 5242880000
+  elapsed time    = 248.10    sec
+  throughput      = 20.15     MB/sec
+  file rate       = 20.15     files/sec
+  IOPS            = 322.45    (random read)
+aggregate:   files read = 5000
+  files done = 5000
+  I/O (record) transfers = 80000
+  total bytes = 5242880000
+  elapsed time    = 248.10    sec
+  throughput      = 20.15     MB/sec
+  file rate       = 20.15     files/sec
+  IOPS            = 322.45    (random read)
 
 
